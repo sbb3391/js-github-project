@@ -2,10 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
   submitFormListener();
 });
 
-function fetchUsers() {
+function fetchUsers(perPage = 30) {
   const userInput = document.querySelector("input#search");
   const userSearchQuery = encodeURIComponent(userInput.value);
-  fetch(`https://api.github.com/search/users?q=${userSearchQuery}`)
+  fetch(`https://api.github.com/search/users?q=${userSearchQuery}&per_page=${perPage}`)
   .then(resp => resp.json())
   .then(json => returnUsers(json))
 }
@@ -41,19 +41,44 @@ function createUserElement(user) {
 
   div.addEventListener("click", function() {
     if (event.target === h2) {
-      showUserRepos(user.login);
+      const ul = document.querySelector("ul#repos-list");
+      while (ul.lastElementChild) {
+        ul.lastElementChild.remove();
+      }
+
+      showUserRepos(user.login, 5);
     }
   })
 }
 
-function showUserRepos(username) {
-  fetch(`https://api.github.com/users/${username}/repos`)
+function showUserRepos(username, perPage = 30) {
+  fetch(`https://api.github.com/users/${username}/repos?per_page=${perPage}`)
   .then(resp => resp.json())
   .then(json => showUserRepoElements(json))
 }
 
 function showUserRepoElements(json) {
-  debugger;
+  for (const repo of json) {
+    addRepoToDOM(repo);
+  }
+}
+
+function addRepoToDOM(repo) {
+  const ul = document.querySelector("ul#repos-list");
+  const li = document.createElement("li");
+  const div = document.createElement("div");
+  const h2 = document.createElement("h2");
+  const p = document.createElement("p");
+  const a = document.createElement("a");
+  ul.appendChild(li);
+  li.appendChild(div);
+  div.appendChild(h2)
+  div.appendChild(p);
+  p.appendChild(a);
+  a.setAttribute("src", repo.html_url);
+  a.innerText = repo.html_url;
+  h2.innerText = repo.name;
+
 }
 
 function submitFormListener() {
@@ -63,7 +88,12 @@ function submitFormListener() {
     if (event.target === submitForm.querySelectorAll("input")[1]) {
       event.preventDefault();
       console.log("success");
-      fetchUsers();
+
+      const userList = document.querySelector("ul#user-list");
+      while (userList.lastElementChild) {
+        userList.lastElementChild.remove();
+      }
+      fetchUsers(5);
     }
   })
 }
